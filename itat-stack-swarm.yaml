@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  web:
+    image: ${IMAGE_TAG}
+    environment:
+      API_KEY: "SGSVFFT-CGAMXR2-JQQCF4E-JQ3D7PN"
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 3s
+        max_attempts: 5
+      update_config:
+        order: start-first
+        failure_action: rollback
+        monitor: 50s
+        parallelism: 1
+        delay: 50s
+    ports:
+      - "8150:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "-H", "x-api-key: SGSVFFT-CGAMXR2-JQQCF4E-JQ3D7PN", "http://127.0.0.1:8000/ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - local-net-search
+      - swarm-net
+
+networks:
+  local-net-search:
+    driver: overlay
+    external: false
+    attachable: true
+
+  swarm-net:
+    external: true
+    attachable: true

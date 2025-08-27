@@ -1,0 +1,52 @@
+stages:
+  - Build
+  - Deploy
+  - Update
+  - Cleanup
+
+Build:
+  stage: Build
+  image: docker:26.1.4-cli-alpine3.20
+  when: manual
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $TOKEN $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE_TAG ./fastapi_server
+    - docker push $IMAGE_TAG
+  tags:
+    - app1-docker
+
+Deploy:
+  stage: Deploy
+  when: manual
+  image: docker:26.1.4-cli-alpine3.20
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $TOKEN $CI_REGISTRY
+  script:
+    - docker network create --driver=overlay swarm-net || true
+    - docker stack deploy --compose-file itat-stack-swarm.yaml itat-stack
+  tags:
+    - app1-docker
+
+Update:
+  stage: Update
+  when: manual
+  image: docker:26.1.4-cli-alpine3.20
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $TOKEN $CI_REGISTRY
+  script:
+    - docker stack deploy --with-registry-auth --resolve-image always --compose-file itat-stack-swarm.yaml itat-stack
+  tags:
+    - app1-docker
+
+Cleanup:
+  stage: Cleanup
+  image: docker:26.1.4-cli-alpine3.20
+  when: manual
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $TOKEN $CI_REGISTRY
+  script:
+    - docker stack rm itat-stack || true
+    - docker images --filter "reference=$IMAGE_TAG*" -q | xargs docker rmi --force || true
+  tags:
+    - app1-docker
