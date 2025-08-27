@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./fastapi_server
+      dockerfile: Dockerfile
+    environment:
+      API_KEY: "SGSVFFT-CGAMXR2-JQQCF4E-JQ3D7PN"
+    ports:
+      - "8150:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "-H", "x-api-key: SGSVFFT-CGAMXR2-JQQCF4E-JQ3D7PN", "http://127.0.0.1:8000/ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
